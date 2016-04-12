@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>Locate Conference 16 Map</title>
+
+    <link rel="stylesheet" href="//cdn.leafletjs.com/leaflet-0.7.3/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/0.4.0/MarkerCluster.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/0.4.0/MarkerCluster.Default.css">
+  </head> 
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    html, body, #map {
+      height: 100%;
+    }
+  </style>
+
+  <body>
+    <div id="map"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-providers/1.1.9/leaflet-providers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-ajax/2.0.0/leaflet.ajax.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/0.4.0/leaflet.markercluster.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-hash/0.2.1/leaflet-hash.min.js"></script>
+
+    <script>
+    var map = L.map('map', {
+        maxZoom: 15
+    }).on('load', function(e) {
+        map.attributionControl.addAttribution("Map created by <a href='http://agl.pw'>Alex Leith</a>");
+    });
+    map.setView([-27.29368, 134.12109], 4);
+    var hash = new L.Hash(map);
+
+    var hereMaps = L.tileLayer.provider('HERE.terrainDay', {
+        app_id: '0wCRmjJq9GwLTuaWPCao',
+        app_code: 'bhOAcQk5lyWeAvuleaUyjg'
+    }).addTo(map);
+
+    var markers = L.markerClusterGroup({
+        maxClusterRadius: 40
+    });
+    var geojsonLayer = new L.GeoJSON.AJAX("http://gnaf.agl.pw/tweets.geojson", {
+        onEachFeature:popUp
+    });
+    markers.addTo(map);
+    //This is a hack to get clusters working without too much hassle...
+    function popUp(f,l){
+        var out = [];
+        var layer = null;
+        if (f.properties){
+            var text = linkify(f.properties.text);
+            text = text.replace(/#(\S*)/g,'<a href="http://twitter.com/#!/search/#$1" target="_blank">#$1</a>');
+            text = text.replace(/@(\S*)/g,'<a href="https://twitter.com/$1" target="_blank">@$1</a>');
+            out.push("<p><strong>" + f.properties.name + "</strong>");
+            out.push(text)
+            out.push("</p><p><strong><a href='" + f.properties.url + "'>Link to tweet</a></strong>");
+            l.bindPopup(out.join("<br />")+"</p");
+            layer = l;
+        }
+        markers.addLayer(layer);
+    }
+    //from http://stackoverflow.com/questions/37684/how-to-replace-plain-urls-with-links
+    function linkify(inputText) {
+        var replacedText, replacePattern1, replacePattern2, replacePattern3;
+
+        //URLs starting with http://, https://, or ftp://
+        replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+        replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank">$1</a>');
+
+        //URLs starting with "www." (without // before it, or it'd re-link the ones done above).
+        replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+        replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank">$2</a>');
+
+        //Change email addresses to mailto:: links.
+        replacePattern3 = /(([a-zA-Z0-9\-\_\.])+@[a-zA-Z\_]+?(\.[a-zA-Z]{2,6})+)/gim;
+        replacedText = replacedText.replace(replacePattern3, '<a href="mailto:$1">$1</a>');
+
+        return replacedText;
+    }
+    setTimeout(function() { window.location.reload(true); }, 300000);
+    
+    </script>
+  </body>
+</html>
